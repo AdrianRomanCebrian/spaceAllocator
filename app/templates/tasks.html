@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Tareas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/grid.css') }}">
+</head>
+<body>
+    <h1>Lista de Tareas</h1>
+
+    <div class="grid-container">
+        {% for task in tasks %}
+        <div class="task-card" onclick="handleClick('{{ task.celery_id }}', '{{ task.estado }}', '{{ task.nombre }}')">
+            <div class="task-name">{{ task.nombre }}</div>
+            <div class="task-id">ID: {{ task.id }}</div>
+            <div class="task-state {% if task.estado == 'PENDING' %}estado-pendiente
+                               {% elif task.estado == 'SUCCESS' %}estado-completado
+                               {% elif task.estado == 'FAILURE' %}estado-fallido
+                               {% elif task.estado == 'STARTED' or task.estado == 'RECEIVED' %}estado-en-progreso
+                               {% endif %}">
+                Estado: {{ task.estado }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <script src="{{ url_for('static', filename='js/tasks.js') }}"></script>
+</body>
+</html>

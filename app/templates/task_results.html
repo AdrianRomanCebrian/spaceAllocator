@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados de la Tarea</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .chart-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .chart-wrapper p {
+            margin: 0 0 10px;
+            text-align: center;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 100%;
+            max-height: 70vh;
+            display: flex;
+            justify-content: center;
+
+            
+        }
+
+        canvas {
+            width: 100%;
+            height: auto;
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        .download-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .download-button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        .download-button:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+        .download-button:active {
+            background-color: #004085;
+        }
+
+        .download-button:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.5);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        input[type="search"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+        input[type="checkbox"] {
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+        .filter-container {
+            margin-bottom: 10px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-colorschemes"></script> -->
+</head>
+
+<body>
+    <h2>Resultados de la Tarea: {{ task_name }}</h2>
+
+    <!-- Gráfico de barras para porcentaje de clases con cambio de aula -->
+    <div class="chart-wrapper">
+        <p>El gráfico representa el porcentaje de los grupos que tienen que tienen un determinado número de aulas
+            asignado durante el
+            curso. Lo ideal es que no tengan que cambiar de aula (solo tengan 1) por motivos logísticos, como por
+            ejemplo, tener que
+            verificar frecuentemente dónde tienen la aula o que un profesor tenga que instalar un software en
+            diferentes equipos.</p>
+
+        <div class="chart-container">
+            <canvas id="histogramaAulas"></canvas>
+        </div>
+    </div>
+    <br>
+
+    <div class="chart-wrapper">
+        <div class="filter-container">
+            <input type="search" id="searchInput" onkeyup="filterTable()" placeholder="Buscar por grupo...">
+            <label><input type="checkbox" id="lengthFilter" onclick="filterTable()"> Mostrar solo grupos con más de 1
+                espacio</label>
+        </div>
+
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>Grupo</th>
+                    <th>Espacios</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Aquí se llenará dinámicamente con JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Gráfico de pastel para porcentaje de entradas en conflicto -->
+    <div class="chart-wrapper">
+        <p>El gráfico muestra el porcentaje de entradas en conflicto que existen en el curso. Se considera un conflicto
+            una <strong>superposición horaria</strong>, superar la <strong>capacidad del aula</strong> y que un grupo
+            tenga que <strong>cambiar de aula</strong> durante el
+            curso.</p>
+
+        <div class="chart-container">
+            <canvas id="pieChartEntradaConflicto"></canvas>
+        </div>
+    </div>
+    <br>
+
+    <!-- Gráfico de pastel para porcentaje de conflicto tipo -->
+    <div class="chart-wrapper">
+        <p>Este gráfico detalla qué porcentaje de conflictos pertenece a cada tipo, destacando su relevancia en la
+            gestión del curso.</p>
+
+        <div class="chart-container">
+            <canvas id="pieChartConflictoTipo"></canvas>
+        </div>
+    </div>
+    <br>
+
+    <!-- Gráfico de barras para horas de duración promedio de entradas -->
+    <div class="chart-wrapper">
+        <p>La duración promedio de las clases del curso es de <strong>{{ task_result.horas_duracion_promedio_entradas
+                }}</strong> horas, proporcionando un contexto sobre la distribución del tiempo en las asignaturas.</p>
+    </div>
+    <br>
+
+    <!-- Gráfico de barras para histograma de horarios más concurridos -->
+    <div class="chart-wrapper">
+        <p>El gráfico muestra los horarios más concurridos del curso, reflejando el uso intenso de los espacios
+            disponibles.</p>
+
+        <div class="chart-container">
+            <canvas id="histogramaMasConcurridos"></canvas>
+        </div>
+    </div>
+    <br>
+
+    <!-- Gráfico de barras para histograma de horarios menos concurridos -->
+    <div class="chart-wrapper">
+        <p>En contraste, el gráfico representa los horarios menos concurridos del curso, evidenciando los momentos de
+            menor actividad en las instalaciones.</p>
+
+        <div class="chart-container">
+            <canvas id="histogramaMenosConcurridos"></canvas>
+        </div>
+    </div>
+    <br>
+
+    <!-- Gráfico de líneas para información diaria de clases y conflictos -->
+    <div class="chart-wrapper">
+        <p>Además, el gráfico muestra la información diaria del número de clases y de conflictos durante el curso,
+            enfocándose en los días de actividad académica.</p>
+
+        <div class="chart-container">
+            <canvas id="lineChart"></canvas>
+        </div>
+    </div>
+    <br>
+
+    <!-- Gráfico de pastel para porcentaje de uso por aula -->
+    <div class="chart-wrapper">
+        <p>El porcentaje medio de ocupación por aula utilizada se presenta en este gráfico, indicando si se alcanza o se
+            excede la capacidad del espacio/aula.</p>
+
+        <div class="chart-container">
+            <canvas id="pieChartUsoPorAula"></canvas>
+        </div>
+    </div>
+    <br>
+
+    <!-- Gráfico de pastel para porcentaje de ocupación promedio -->
+    <div class="chart-wrapper">
+        <p>Similarmente, se muestra el número total medio de alumnos en cada clase utilizada.</p>
+
+        <div class="chart-container">
+            <canvas id="pieChartOcupacionPromedio"></canvas>
+        </div>
+    </div>
+    <br>
+
+    <!-- Gráfico de barras para porcentaje de capacidad promedio utilizada -->
+    <div class="chart-wrapper">
+        <p>Al inicio del proceso de optimización, se asignan aulas disponibles. Este gráfico refleja el porcentaje de
+            aulas utilizadas, permitiendo espacios para actividades adicionales en las aulas en desuso o mientras las
+            aulas asignadas permanecen
+            libres.</p>
+
+        <div class="chart-container">
+            <canvas id="barChartCapacidadPromedio"></canvas>
+        </div>
+    </div>
+    <br>
+
+    <!-- Gráfico de pastel para número de clases con capacidad excedida -->
+    <div class="chart-wrapper">
+        <p>Finalmente, el gráfico muestra el porcentaje de clases en las que se supera la capacidad del aula, destacando
+            la gestión de recursos y la planificación académica.</p>
+
+        <div class="chart-container">
+            <canvas id="pieChartMediaAlumnos"></canvas>
+        </div>
+    </div>
+    <br>
+
+
+    <!-- Botón de descarga -->
+    <div class="download-container">
+        <button class="download-button" onclick="descargarCSV()">
+            Descargar CSV
+        </button>
+    </div>
+
+    <script>
+
+        function convertirJSONaCSV(datosJSON) {
+            // Encabezados para el CSV
+            let csv = 'id; room_id\n';
+
+            // Iterar sobre los datos y agregar cada línea al CSV
+            Object.keys(datosJSON).forEach(key => {
+                csv += `${key}; ${datosJSON[key]}\n`;
+            });
+
+            return csv;
+        }
+
+        function descargarCSV() {
+            // Obtener los datos JSON desde taskResult.datos_descargar_asignacion
+            const datosJSON = {{ task_result.datos_descargar_asignacion | tojson | safe
+        }};
+
+        // Convertir JSON a CSV
+        const csv = convertirJSONaCSV(datosJSON);
+
+        // Crear un objeto Blob
+        const blob = new Blob([csv], { type: 'text/csv' });
+
+        // Crear un enlace para descargar
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = '{{ task_name | safe }}';
+
+        // Agregar el enlace al documento y hacer clic en él
+        document.body.appendChild(a);
+        a.click();
+
+        // Limpiar
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        }
+
+        // Datos que provienen desde Flask (simulados para demostración)
+        var taskResult = {{ task_result | safe }};
+
+        document.addEventListener('DOMContentLoaded', function () {
+
+
+            console.log(taskResult)
+
+            // Configurar histograma de aulas
+            const ctxHistogramaAulas = document.getElementById('histogramaAulas').getContext('2d');
+            const histogramaAulasChart = new Chart(ctxHistogramaAulas, {
+                type: 'bar',
+                data: {
+                    labels: taskResult.histograma_aulas_data[0],
+                    datasets: [{
+                        label: 'Cambios de aula por grupo',
+                        data: taskResult.histograma_aulas_data[1],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Porcentaje de grupos que cambian N veces de aula'
+                            }
+                        },
+                        x: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Numero de cambios de aula'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Configurar gráfico de pastel para porcentaje de conflicto tipo
+            const ctxPieChartConflictoTipo = document.getElementById('pieChartConflictoTipo').getContext('2d');
+            const pieChartConflictoTipo = new Chart(ctxPieChartConflictoTipo, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(taskResult.piechart_porcentaje_conflicto_tipo),
+                    datasets: [{
+                        label: 'Porcentaje de conflicto tipo',
+                        data: Object.values(taskResult.piechart_porcentaje_conflicto_tipo),
+
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+
+            // Configurar gráfico de pastel para porcentaje de entrada conflicto
+            const ctxPieChartEntradaConflicto = document.getElementById('pieChartEntradaConflicto').getContext('2d');
+            const pieChartEntradaConflicto = new Chart(ctxPieChartEntradaConflicto, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(taskResult.piechart_porcentaje_entrada_conflicto),
+                    datasets: [{
+                        label: 'Porcentaje de entrada conflicto',
+                        data: Object.values(taskResult.piechart_porcentaje_entrada_conflicto),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+
+            // Configurar histograma de horarios más concurridos
+            const ctxHistogramaMasConcurridos = document.getElementById('histogramaMasConcurridos').getContext('2d');
+            const histogramaMasConcurridosChart = new Chart(ctxHistogramaMasConcurridos, {
+                type: 'bar',
+                data: {
+                    labels: taskResult.histograma_horarios_mas_concurridos.map(item => item[0].join(' - ')),
+                    datasets: [{
+                        label: 'Horarios más concurridos',
+                        data: taskResult.histograma_horarios_mas_concurridos.map(item => item[1]),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Configurar histograma de horarios menos concurridos
+            const ctxHistogramaMenosConcurridos = document.getElementById('histogramaMenosConcurridos').getContext('2d');
+            const histogramaMenosConcurridosChart = new Chart(ctxHistogramaMenosConcurridos, {
+                type: 'bar',
+                data: {
+                    labels: taskResult.histograma_horarios_menos_concurridos.map(item => item[0].join(' - ')),
+                    datasets: [{
+                        label: 'Horarios menos concurridos',
+                        data: taskResult.histograma_horarios_menos_concurridos.map(item => item[1]),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Configuración del gráfico de línea
+            var ctx = document.getElementById('lineChart').getContext('2d');
+            var lineChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Object.keys(taskResult.linea_temporal_numero_clases),
+                    datasets: [{
+                        label: 'Número de clases',
+                        data: Object.values(taskResult.linea_temporal_numero_clases),
+                        fill: false,
+                        tension: 0.1
+                    }, {
+                        label: 'Número de conflictos',
+                        data: Object.values(taskResult.linea_temporal_numero_conflictos),
+                        fill: false,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Evolucion temporal clases y conflictos'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Días'
+                            }
+                        },
+                        y: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Valores'
+                            }
+                        }
+                    }
+                }
+            });
+
+
+
+            // Configurar gráfico de pastel para porcentaje de uso por aula
+            const ctxPieChartUsoPorAula = document.getElementById('pieChartUsoPorAula').getContext('2d');
+            const pieChartUsoPorAula = new Chart(ctxPieChartUsoPorAula, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(taskResult.porcentaje_uso_por_aula),
+                    datasets: [{
+                        label: 'Porcentaje de uso por aula',
+                        data: Object.values(taskResult.porcentaje_uso_por_aula),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+
+            // Configurar gráfico de barras para porcentaje de capacidad promedio utilizada
+            const ctxBarChartCapacidadPromedio = document.getElementById('barChartCapacidadPromedio').getContext('2d');
+            const barChartCapacidadPromedio = new Chart(ctxBarChartCapacidadPromedio, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(taskResult.porcentaje_aulas_utilizadas),
+                    datasets: [{
+                        label: 'Porcentaje de capacidad promedio utilizada',
+                        data: Object.values(taskResult.porcentaje_aulas_utilizadas),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // // Configurar gráfico de barras para horas de duración promedio de entradas
+            // const ctxBarChartHorasDuracion = document.getElementById('barChartHorasDuracion').getContext('2d');
+            // const barChartHorasDuracion = new Chart(ctxBarChartHorasDuracion, {
+            //     type: 'bar',
+            //     data: {
+            //         labels: ['Horas de duración promedio'],
+            //         datasets: [{
+            //             label: 'Horas de duración promedio de entradas',
+            //             data: [taskResult.horas_duracion_promedio_entradas],
+            //             borderWidth: 1
+            //         }]
+            //     },
+            //     options: {
+            //         responsive: true,
+            //         scales: {
+            //             y: {
+            //                 beginAtZero: true
+            //             }
+            //         }
+            //     }
+            // });
+
+
+
+            // Configurar gráfico de pastel para porcentaje de ocupación promedio
+            const ctxPieChartOcupacionPromedio = document.getElementById('pieChartOcupacionPromedio').getContext('2d');
+            const pieChartOcupacionPromedio = new Chart(ctxPieChartOcupacionPromedio, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(taskResult.numero_ocupacion_promedio_en_personas_por_aula),
+                    datasets: [{
+                        label: 'Media de personas por aula',
+                        data: Object.values(taskResult.numero_ocupacion_promedio_en_personas_por_aula),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+
+            // Configurar gráfico de pastel para número media de alumnos
+            const ctxPieChartMediaAlumnos = document.getElementById('pieChartMediaAlumnos').getContext('2d');
+            const pieChartMediaAlumnos = new Chart(ctxPieChartMediaAlumnos, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(taskResult.numero_media_alumnos_capacidad_sobrepasada),
+                    datasets: [{
+                        label: 'Porcentaje de clases donde se supera la capacidad de alumnos',
+                        data: Object.values(taskResult.numero_media_alumnos_capacidad_sobrepasada),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+
+
+
+
+        });
+
+        var data = taskResult.grupos_aulas_asignaciones
+        // Función para llenar la tabla con datos y aplicar la búsqueda y filtro
+        function fillTable() {
+            var table = document.getElementById("dataTable");
+            var tbody = table.getElementsByTagName("tbody")[0];
+            tbody.innerHTML = ""; // Limpiar tbody antes de llenarlo
+
+            // Búsqueda (filtrado) en la tabla
+            var searchTerm = document.getElementById("searchInput").value.trim().toLowerCase();
+            var lengthFilter = document.getElementById("lengthFilter").checked;
+            var count = 0; // Contador para limitar resultados
+
+            // Iterar sobre el diccionario y llenar la tabla
+            for (var grupo in data) {
+                var elementos = data[grupo];
+
+                // Filtrar por longitud mayor a 1 si el filtro está activado
+                if (lengthFilter && elementos.length <= 1) {
+                    continue;
+                }
+
+                // Búsqueda por grupo
+                if (searchTerm === "" || grupo.toLowerCase().includes(searchTerm)) {
+                    var row = tbody.insertRow();
+                    var cell1 = row.insertCell(0);
+                    var cell2 = row.insertCell(1);
+
+                    cell1.textContent = grupo;
+                    cell2.textContent = elementos.join(', ');
+
+                    count++;
+                    // Limitar el número de resultados mostrados (N resultados)
+                    if (count >= 10 && !lengthFilter) { // Cambiar 10 por el número deseado de resultados a mostrar
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Función para filtrar la tabla en tiempo real al escribir en el campo de búsqueda o al cambiar el filtro de longitud
+        function filterTable() {
+            fillTable();
+        }
+
+        // Llenar la tabla al cargar la página por primera vez
+        fillTable();
+
+    </script>
+</body>
+
+</html>

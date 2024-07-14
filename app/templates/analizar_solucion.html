@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpaceAllocator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+</head>
+
+<body>
+    <div class="container">
+        <h1>SpaceAllocator</h1>
+        <form id="uploadForm" action="/analizar_solucion" method="POST" enctype="multipart/form-data">
+            <div class="form-input">
+                <label for="nombre">Nombre:</label>
+                <input type="text" id="nombre" name="nombre" required>
+            </div>
+            <div class="form-input">
+                <label for="aulas">Aulas (CSV):</label>
+                <input type="file" id="aulas" name="aulas" accept=".csv" required>
+            </div>
+            <div class="form-input">
+                <label for="solucion">solucion (CSV):</label>
+                <input type="file" id="solucion" name="solucion" accept=".csv" required>
+            </div>
+
+            <button type="submit">Procesar</button>
+        </form>
+    </div>
+
+
+</body>
+
+</html>

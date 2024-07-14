@@ -1,0 +1,17 @@
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    depends_on:
+      - redis
+      - celery
+  redis:
+    image: "redis:latest"  # Usa la imagen oficial de Redis
+    ports:
+      - "6379:6379"
+  celery:
+    build: .
+    command: celery -A app.celery worker --loglevel=info
+    depends_on:
+      - redis

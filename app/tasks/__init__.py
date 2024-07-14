@@ -1,0 +1,2 @@
+from app.tasks.algoritmo_heuristico_task import procesar_datos
+from app.tasks.analizar_solucion_task import procesar_solucion
